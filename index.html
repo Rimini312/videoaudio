@@ -578,6 +578,42 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 <!-- ─────────── EXPORT ─────────── -->
 
+<!-- ─────────── REVERB ─────────── -->
+
+<div class="sec">
+  <div class="st">Reverb</div>
+  <div class="tr"><span class="tl">Activar reverb</span><button class="tg" id="tg-reverb"></button></div>
+  <div id="reverb-x" style="display:none;margin-top:10px">
+    <div class="fi">
+      <div class="fr"><span>Preset</span></div>
+      <div class="mode" id="mode-reverb">
+        <button class="mp" data-v="room">Room</button>
+        <button class="mp" data-v="plate">Plate</button>
+        <button class="mp sel" data-v="hall">Hall</button>
+        <button class="mp" data-v="cathedral">Cathedral</button>
+      </div>
+      <div class="hint" id="hint-reverb">Hall: reverb amplio y natural de sala de conciertos. Default 3s.</div>
+    </div>
+    <div class="fi">
+      <div class="fr"><span>Mix (dry/wet)</span><span class="fv" id="v-rvm">25%</span></div>
+      <div class="sr"><input type="range" id="s-rvm" min="0" max="100" value="25"><input type="number" class="ni" id="n-rvm" min="0" max="100" value="25"></div>
+      <div class="hint">0% = seco (sin reverb). 100% = solo reverb.</div>
+    </div>
+    <div class="fi">
+      <div class="fr"><span>Pre-delay</span><span class="fv" id="v-rvp">20ms</span></div>
+      <div class="sr"><input type="range" id="s-rvp" min="0" max="200" value="20"><input type="number" class="ni" id="n-rvp" min="0" max="200" value="20"></div>
+      <div class="hint">Separa el sonido original del reverb. Más alto = más claridad.</div>
+    </div>
+    <div class="fi">
+      <div class="fr"><span>Tiempo (decay)</span><span class="fv" id="v-rvd">preset</span></div>
+      <div class="sr"><input type="range" id="s-rvd" min="0" max="8" value="0" step="0.1"><input type="number" class="ni" id="n-rvd" min="0" max="8" value="0" step="0.1"></div>
+      <div class="hint">0 = usa el tiempo del preset. Mueve para override manual (0.2s – 8s).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── EXPORT ─────────── -->
+
 <div class="sec">
   <div class="st">Calidad de exportación</div>
   <div class="fi">
@@ -872,6 +908,12 @@ const cfg={
     react:false, reactPulse:0.15,
   },
   exportBitrate:25, exportFps:30,
+  // Reverb
+  reverbEnabled:false,
+  reverbPreset:'hall',
+  reverbMix:0.25,       // 0..1
+  reverbPreDelay:20,    // ms
+  reverbDecay:0,        // 0 = use preset default; >0 = override in seconds
 };
 
 const DS=Array.from({length:8},()=>({
@@ -888,6 +930,75 @@ let totalEnergy=0;
 // ═══════════════════════════════════════════════════════════════
 let actx=null,analyser=null,srcNode=null,fftBuf=null,sr=44100,audioReady=false;
 let exportAudioDest=null;
+// Reverb audio graph nodes
+let convolver=null, preDelay=null, dryGain=null, wetGain=null, reverbMerger=null;
+
+// Reverb preset defaults: decay (seconds), damping (0..1), character
+const REVERB_PRESETS = {
+  room:      { decay: 0.8,  damping: 0.35, diffusion: 0.6, predelay: 5  },
+  plate:     { decay: 1.5,  damping: 0.15, diffusion: 0.9, predelay: 10 },
+  hall:      { decay: 3.0,  damping: 0.25, diffusion: 0.8, predelay: 20 },
+  cathedral: { decay: 5.5,  damping: 0.20, diffusion: 0.95,predelay: 40 },
+};
+
+// Build a synthetic stereo impulse response: two channels of decaying filtered noise.
+// This produces convolution-quality reverb with configurable length and character,
+// without requiring any external audio files (so it works on GitHub Pages).
+function buildImpulseResponse(sampleRate, decaySec, damping, diffusion){
+  const length = Math.max(512, Math.floor(sampleRate * decaySec));
+  const buffer = actx.createBuffer(2, length, sampleRate);
+  // Damping: high-freq decay faster. Implemented via one-pole lowpass per channel.
+  const dampCoef = clamp(1 - damping, 0.05, 1);
+  for(let ch=0; ch<2; ch++){
+    const data = buffer.getChannelData(ch);
+    // Stereo decorrelation: slight offset per channel for stereo width
+    const phase = ch === 0 ? 0 : 0.013 * sampleRate;
+    let prev = 0;
+    for(let i=0; i<length; i++){
+      const t = i / length;
+      // Exponential decay envelope
+      const env = Math.pow(1 - t, 2 + (1 - damping)*2);
+      // Base noise with slight correlation between channels for realism
+      const noise = (Math.random()*2 - 1);
+      // Apply diffusion: mix with previous sample to smooth (reduces grain)
+      const smoothed = noise*diffusion + prev*(1-diffusion);
+      prev = smoothed;
+      // One-pole lowpass to simulate high-freq damping
+      data[i] = smoothed * env * dampCoef;
+    }
+    // Second pass: apply lowpass filter for high-freq damping across the tail
+    let lp = 0;
+    const lpCoef = 0.3 + damping*0.4; // more damping = more lowpass
+    for(let i=0; i<length; i++){
+      lp = lp + lpCoef*(data[i] - lp);
+      data[i] = lp * 1.5; // compensate for lowpass gain loss
+    }
+  }
+  return buffer;
+}
+
+function updateReverbIR(){
+  if(!actx || !convolver) return;
+  const p = REVERB_PRESETS[cfg.reverbPreset] || REVERB_PRESETS.hall;
+  const decay = cfg.reverbDecay > 0 ? cfg.reverbDecay : p.decay;
+  try {
+    convolver.buffer = buildImpulseResponse(actx.sampleRate, decay, p.damping, p.diffusion);
+  } catch(e){ console.error('IR build failed:', e); }
+}
+
+function updateReverbParams(){
+  if(!actx || !dryGain || !wetGain || !preDelay) return;
+  const mix = clamp(cfg.reverbMix, 0, 1);
+  // Equal-power crossfade keeps perceived loudness stable across the mix slider
+  dryGain.gain.value = Math.cos(mix * Math.PI * 0.5);
+  wetGain.gain.value = Math.sin(mix * Math.PI * 0.5);
+  preDelay.delayTime.value = cfg.reverbPreDelay / 1000; // ms to seconds
+  // If reverb is disabled entirely, kill the wet
+  if(!cfg.reverbEnabled){
+    dryGain.gain.value = 1;
+    wetGain.gain.value = 0;
+  }
+}
 
 function initAudio(vid){
   if(actx){try{actx.close()}catch(e){}}
@@ -898,8 +1009,34 @@ function initAudio(vid){
   analyser.fftSize=8192;
   analyser.smoothingTimeConstant=0;
   srcNode=actx.createMediaElementSource(vid);
+
+  // Build reverb graph:
+  //
+  //   srcNode ──► analyser ─┬──► dryGain ──┐
+  //                         │              ├──► reverbMerger ──► destination
+  //                         └► preDelay ──► convolver ──► wetGain ─┘
+  //
+  // analyser BEFORE reverb so dots react to original sound, not to reverb tails.
+  // reverbMerger is a GainNode that just sums dry + wet.
+  convolver = actx.createConvolver();
+  convolver.normalize = true;
+  preDelay = actx.createDelay(1.0); // max 1 second of predelay
+  dryGain = actx.createGain();
+  wetGain = actx.createGain();
+  reverbMerger = actx.createGain();
+
   srcNode.connect(analyser);
-  analyser.connect(actx.destination);
+  analyser.connect(dryGain);
+  analyser.connect(preDelay);
+  preDelay.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(reverbMerger);
+  wetGain.connect(reverbMerger);
+  reverbMerger.connect(actx.destination);
+
+  updateReverbIR();
+  updateReverbParams();
+
   fftBuf=new Float32Array(analyser.frequencyBinCount);
   audioReady=true;
 }
@@ -1436,7 +1573,10 @@ async function doExport(){
   // CRITICAL: fully reset export state before each export to avoid stale state
   // from previous exports (was causing "blur doesn't update on re-export")
   exportAudioDest = actx.createMediaStreamDestination();
-  srcNode.connect(exportAudioDest);
+  // Capture audio for export: use reverbMerger which has dry+wet already mixed.
+  // Fallback to srcNode if reverb graph not built.
+  if(reverbMerger) reverbMerger.connect(exportAudioDest);
+  else srcNode.connect(exportAudioDest);
   if(videoEl.videoWidth){
     exportCanvas.width = videoEl.videoWidth;
     exportCanvas.height = videoEl.videoHeight;
@@ -1462,7 +1602,11 @@ async function doExport(){
   const cleanup=()=>{
     exporting=false;
     if(exportTickId){clearInterval(exportTickId); exportTickId=null}
-    try{if(exportAudioDest){srcNode.disconnect(exportAudioDest); exportAudioDest=null}}catch(e){}
+    try{if(exportAudioDest){
+      try{if(reverbMerger)reverbMerger.disconnect(exportAudioDest)}catch(e){}
+      try{srcNode.disconnect(exportAudioDest)}catch(e){}
+      exportAudioDest=null;
+    }}catch(e){}
     btn.disabled=false; pw.classList.remove('active'); pf.style.width='0%';
     document.getElementById('bp').textContent='▶ Play';
   };
@@ -1779,6 +1923,47 @@ document.addEventListener('DOMContentLoaded',()=>{
   lsn('s-eb', 'n-eb', 'exportBitrate', v=>Math.round(v));
   lsn('s-ef', 'n-ef', 'exportFps', v=>Math.round(v));
 
+  // Reverb sliders — update audio graph on change
+  function lsnReverb(sid, nid, key, fmt, xfm, onChange){
+    const sl=document.getElementById(sid);
+    const nm=document.getElementById(nid);
+    const fv=document.getElementById('v-'+sid.replace('s-',''));
+    function apply(v){
+      v = clamp(parseFloat(v)||0, parseFloat(sl.min), parseFloat(sl.max));
+      sl.value=v; nm.value=v;
+      if(fv) fv.textContent = fmt ? fmt(v) : v;
+      cfg[key] = xfm ? xfm(v) : v;
+      if(onChange) onChange();
+    }
+    sl.oninput=()=>apply(sl.value);
+    nm.oninput=()=>apply(nm.value);
+    apply(sl.value);
+  }
+  lsnReverb('s-rvm','n-rvm','reverbMix',v=>Math.round(v)+'%',v=>v/100, updateReverbParams);
+  lsnReverb('s-rvp','n-rvp','reverbPreDelay',v=>Math.round(v)+'ms',null, updateReverbParams);
+  lsnReverb('s-rvd','n-rvd','reverbDecay',v=>{
+    const n=parseFloat(v);
+    return n<=0 ? 'preset' : n.toFixed(1)+'s';
+  },null, updateReverbIR);
+
+  // Toggle for enabling reverb
+  tog('tg-reverb','reverbEnabled',on=>{
+    document.getElementById('reverb-x').style.display = on ? 'block' : 'none';
+    updateReverbParams();
+  });
+
+  // Preset picker
+  const HINTS_REVERB={
+    room:      'Room: reverb corto y pequeño, ideal para voz o detalles íntimos. ~0.8s.',
+    plate:     'Plate: estilo vintage de estudio, brillante y denso. ~1.5s.',
+    hall:      'Hall: reverb amplio y natural de sala de conciertos. ~3s.',
+    cathedral: 'Cathedral: muy largo y oscuro, atmósfera inmensa. ~5.5s.'
+  };
+  setupModeChooser('mode-reverb','reverbPreset',v=>{
+    document.getElementById('hint-reverb').textContent = HINTS_REVERB[v];
+    updateReverbIR();
+  });
+
   // Panel opacity slider — controls CSS variable --panel-alpha
   (function(){
     const sl = document.getElementById('s-pal');
@@ -1910,8 +2095,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   document.getElementById('br2').onclick=()=>{
     if(animId){cancelAnimationFrame(animId); animId=null}
-    if(exportAudioDest){try{srcNode.disconnect(exportAudioDest)}catch(e){} exportAudioDest=null}
-    if(actx){actx.close(); actx=null; analyser=null; srcNode=null; fftBuf=null; audioReady=false}
+    if(exportAudioDest){
+      try{if(reverbMerger)reverbMerger.disconnect(exportAudioDest)}catch(e){}
+      try{srcNode.disconnect(exportAudioDest)}catch(e){}
+      exportAudioDest=null;
+    }
+    if(actx){actx.close(); actx=null; analyser=null; srcNode=null; fftBuf=null; audioReady=false; convolver=null; preDelay=null; dryGain=null; wetGain=null; reverbMerger=null}
     if(videoEl){videoEl.pause(); videoEl.src=''}
     DS.forEach(d=>{
       d.energy=0; d.colorEnergy=0; d.localT=0.5;
