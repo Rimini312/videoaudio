@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +11,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{background:var(--bg);color:var(--tx);font-family:'DM Mono',monospace;display:flex;flex-direction:column;overflow:hidden;height:100vh}
-header{flex-shrink:0;padding:13px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;z-index:10}
+header{flex-shrink:0;padding:9px 20px;padding-top:max(9px,env(safe-area-inset-top));padding-right:60px;border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:7px;z-index:10}
+.hrow{display:flex;align-items:center;gap:12px;min-height:22px}
+.hrow-ctrls{min-height:26px}
 header h1{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ac)}
 header span{font-size:.6rem;color:var(--dim);letter-spacing:.05em}
 .hr{margin-left:auto;display:flex;gap:7px;align-items:center}
@@ -44,10 +47,10 @@ body.panel-open .main{padding-right:var(--pw)}
 .pl{font-size:.6rem;color:var(--mid)}
 .pb{width:150px;height:2px;background:var(--bd);border-radius:1px;overflow:hidden}
 .pf{height:100%;background:var(--ac);width:0%;transition:width .15s}
-.ptog{position:fixed;right:13px;top:9px;z-index:200;width:31px;height:31px;border:1px solid var(--bd);background:var(--sf);border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--mid);transition:all .15s}
+.ptog{position:fixed;right:13px;top:max(9px,calc(env(safe-area-inset-top) + 4px));z-index:200;width:31px;height:31px;border:1px solid var(--bd);background:var(--sf);border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--mid);transition:all .15s}
 .ptog:hover{border-color:var(--ac);color:var(--ac)}
 .ptog.open{border-color:var(--ac);color:#000;background:var(--ac)}
-.panel{position:fixed;top:0;right:0;width:var(--pw);height:100vh;background:var(--sf);border-left:1px solid var(--bd);z-index:199;transform:translateX(100%);transition:transform .28s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;overflow:hidden}
+.panel{position:fixed;top:0;right:0;width:var(--pw);height:100vh;background:rgba(17,17,17,var(--panel-alpha,0.95));backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-left:1px solid var(--bd);z-index:199;transform:translateX(100%);transition:transform .28s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 .panel.open{transform:translateX(0)}
 .ph{padding:15px 15px 11px;border-bottom:1px solid var(--bd);font-family:'Syne',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--mid);flex-shrink:0}
 .pb2{flex:1;overflow-y:auto;overflow-x:hidden}
@@ -88,6 +91,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .cr{display:flex;align-items:center;gap:7px}
 .sw{width:24px;height:24px;border-radius:2px;border:1px solid var(--bd);overflow:hidden;position:relative;flex-shrink:0;cursor:pointer}
 .sw input[type=color]{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;cursor:pointer}
+/* cgrid pickers need full-area clickable input (iOS Safari sometimes rejects negative-inset pickers) */
+.cgrid .sw{width:100%;height:28px;overflow:visible}
+.cgrid .sw input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;-webkit-appearance:none;border:0;padding:0}
 .sf{width:100%;height:100%;pointer-events:none}
 .hi{flex:1;background:var(--sf2);border:1px solid var(--bd);border-radius:2px;color:var(--tx);font-family:'DM Mono',monospace;font-size:.58rem;padding:4px 5px;outline:none;text-transform:uppercase}
 .hi:focus{border-color:var(--ac)}
@@ -105,7 +111,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .mp:hover{border-color:var(--mid);color:var(--tx)}
 .mp.sel{border-color:var(--ac);color:var(--ac);background:rgba(200,255,0,.05)}
 .cgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px}
-.cgrid .sw{width:100%;height:22px}
 .txta{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:2px;color:var(--tx);font-family:'DM Mono',monospace;font-size:.62rem;padding:5px 6px;outline:none;resize:vertical;min-height:48px}
 .txta:focus{border-color:var(--ac)}
 .sel{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:2px;color:var(--tx);font-family:'DM Mono',monospace;font-size:.6rem;padding:5px 6px;outline:none;cursor:pointer}
@@ -117,8 +122,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </head>
 <body>
 <header>
-  <h1>Trumpet Viz</h1><span>frequency visualizer</span>
-  <div class="hr">
+  <div class="hrow">
+    <h1>Trumpet Viz</h1><span>frequency visualizer</span>
+  </div>
+  <div class="hrow hrow-ctrls">
     <div class="ctrls" id="ctrls">
       <button class="btn" id="bp">▶ Play</button>
       <button class="btn acc" id="bx">↓ Export</button>
@@ -144,6 +151,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="pb2">
 
 <div class="sec">
+  <div class="st">Opacidad del panel</div>
+  <div class="fi" style="margin-bottom:0">
+    <div class="fr"><span>Opacidad</span><span class="fv" id="v-pal">95%</span></div>
+    <div class="sr"><input type="range" id="s-pal" min="20" max="100" value="95"><input type="number" class="ni" id="n-pal" min="20" max="100" value="95"></div>
+    <div class="hint">Panel semitransparente para ver el vídeo por detrás mientras ajustas.</div>
+  </div>
+</div>
+
+<div class="sec">
   <div class="st">Vista previa</div>
   <div class="dp" id="dp">
     <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
@@ -163,15 +179,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── COLOR MODE ─────────── -->
+
 <div class="sec">
   <div class="st">Modo de color</div>
   <div class="mode" id="mode-color">
     <button class="mp" data-v="locked">Locked</button>
     <button class="mp sel" data-v="spread">Spread</button>
     <button class="mp" data-v="drift">Drift</button>
+    <button class="mp" data-v="walk">Walk</button>
   </div>
   <div class="hint" id="hint-mode-color">Spread: cada bola recorre toda la paleta partiendo de un color distinto.</div>
-  <div class="fi" style="margin-top:9px">
+  <div class="fi" id="fi-cspd" style="margin-top:9px">
     <div class="fr"><span>Velocidad de color</span><span class="fv" id="v-cspd">1.0×</span></div>
     <div class="sr"><input type="range" id="s-cspd" min="0.1" max="8" value="1.0" step="0.1"><input type="number" class="ni" id="n-cspd" min="0.1" max="8" value="1.0" step="0.1"></div>
     <div class="hint">Cuánto recorre el color con pequeños cambios de frecuencia.</div>
@@ -180,6 +198,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="fr"><span>Velocidad drift</span><span class="fv" id="v-drs">0.05 Hz</span></div>
     <div class="sr"><input type="range" id="s-drs" min="0.01" max="1" value="0.05" step="0.01"><input type="number" class="ni w" id="n-drs" min="0.01" max="1" value="0.05" step="0.01"></div>
     <div class="hint">Velocidad de la deriva continua. Lento = meditativo.</div>
+  </div>
+  <div id="fi-walk" style="display:none">
+    <div class="fi" style="margin-top:9px">
+      <div class="fr"><span>Fuerza del walk</span><span class="fv" id="v-wkf">1.0×</span></div>
+      <div class="sr"><input type="range" id="s-wkf" min="0.1" max="10" value="1.0" step="0.1"><input type="number" class="ni" id="n-wkf" min="0.1" max="10" value="1.0" step="0.1"></div>
+      <div class="hint">Multiplicador de la velocidad con la que avanza el color.</div>
+    </div>
+    <div class="fi">
+      <div class="fr"><span>Pivot (centro de banda)</span><span class="fv" id="v-wkp">50%</span></div>
+      <div class="sr"><input type="range" id="s-wkp" min="0" max="100" value="50"><input type="number" class="ni" id="n-wkp" min="0" max="100" value="50"></div>
+      <div class="hint">Frecuencia "neutra" dentro de la banda. Por debajo retrocede, por encima avanza.</div>
+    </div>
+    <div class="tr" style="margin-top:8px">
+      <span class="tl">Invertir dirección</span><button class="tg" id="tg-wkinv"></button>
+    </div>
+    <div class="hint" style="margin-top:3px">Intercambia qué lado de la banda hace avanzar y cuál retroceder.</div>
   </div>
 </div>
 
@@ -194,6 +228,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── PALETTE ─────────── -->
+
 <div class="sec">
   <div class="st">Paleta de color</div>
   <div class="pg" id="pg"></div>
@@ -217,11 +252,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <div class="sec">
-  <div class="st">Magnético (espectro vs paleta)</div>
+  <div class="st">Fidelidad a la paleta</div>
   <div class="fi">
-    <div class="fr"><span>Fuerza</span><span class="fv" id="v-mag">40%</span></div>
-    <div class="sr"><input type="range" id="s-mag" min="0" max="100" value="40"><input type="number" class="ni" id="n-mag" min="0" max="100" value="40"></div>
-    <div class="hint">Mezcla entre arcoíris HSL (0%) y colores exactos de la paleta (100%).</div>
+    <div class="fr"><span>Fuerza</span><span class="fv" id="v-mag">85%</span></div>
+    <div class="sr"><input type="range" id="s-mag" min="0" max="100" value="85"><input type="number" class="ni" id="n-mag" min="0" max="100" value="85"></div>
+    <div class="hint">0% = arcoíris HSL completo (ignora la paleta). 100% = solo los colores de la paleta. Subir si no se notan los cambios de paleta.</div>
   </div>
 </div>
 
@@ -238,12 +273,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="st">Atracción al color</div>
   <div class="fi">
     <div class="fr"><span>Pegajosidad</span><span class="fv" id="v-atc">0%</span></div>
-    <div class="sr"><input type="range" id="s-atc" min="0" max="100" value="0"><input type="number" class="ni" id="n-atc" min="0" max="100" value="0"></div>
-    <div class="hint">0% = vuelve al base en silencio. Alto = conserva tinte.</div>
+    <div class="sr"><input type="range" id="s-atc" min="-100" max="100" value="0"><input type="number" class="ni" id="n-atc" min="-100" max="100" value="0"></div>
+    <div class="hint">0% = vuelve al base normal. Positivo = conserva tinte (nunca blanco puro). Negativo = vuelve al base más rápido que el release.</div>
   </div>
 </div>
 
 <!-- ─────────── POSITION (moved up — used often) ─────────── -->
+
 <div class="sec">
   <div class="st">Posición y espaciado</div>
   <div class="fi">
@@ -258,6 +294,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── SENSITIVITY ─────────── -->
+
 <div class="sec">
   <div class="st">Sensibilidad</div>
   <div class="fi">
@@ -286,6 +323,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── BANDS ─────────── -->
+
 <div class="sec">
   <div class="st">Inicio última banda</div>
   <div class="fi">
@@ -301,6 +339,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── SIZE ─────────── -->
+
 <div class="sec">
   <div class="st">Tamaño</div>
   <div class="fi">
@@ -314,6 +353,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── ENVELOPES ─────────── -->
+
 <div class="sec">
   <div class="st">Inercia tamaño</div>
   <div class="fi">
@@ -348,6 +388,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── EFFECTS ─────────── -->
+
 <div class="sec">
   <div class="st">Glow</div>
   <div class="tr"><span class="tl">Efecto glow</span><button class="tg" id="tg-glow"></button></div>
@@ -361,16 +402,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 <div class="sec">
   <div class="st">Desenfoque de vídeo</div>
-  <div class="tr"><span class="tl">Activar blur</span><button class="tg" id="tg-blur"></button></div>
-  <div id="blur-x" style="display:none;margin-top:9px">
+  <div class="tr"><span class="tl">Activar blur</span><button class="tg on" id="tg-blur"></button></div>
+  <div id="blur-x" style="margin-top:9px">
     <div class="fi">
       <div class="fr"><span>Intensidad (px)</span><span class="fv" id="v-bl">4</span></div>
       <div class="sr"><input type="range" id="s-bl" min="0" max="50" value="4" step=".5"><input type="number" class="ni" id="n-bl" min="0" max="50" value="4" step=".5"></div>
     </div>
     <div class="fi" style="margin-top:8px">
-      <div class="tr" style="margin-bottom:6px"><span class="tl">LFO (movimiento)</span><button class="tg" id="tg-lfo"></button></div>
+      <div class="tr" style="margin-bottom:6px"><span class="tl">LFO (movimiento)</span><button class="tg on" id="tg-lfo"></button></div>
     </div>
-    <div id="lfo-x" style="display:none">
+    <div id="lfo-x">
       <div class="fi">
         <div class="fr"><span>Forma</span></div>
         <div class="sr" style="gap:5px">
@@ -391,6 +432,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── TEXT ─────────── -->
+
 <div class="sec">
   <div class="st">Texto sobre el vídeo</div>
   <div class="tr"><span class="tl">Activar texto</span><button class="tg" id="tg-text"></button></div>
@@ -402,6 +444,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="fi">
       <div class="fr"><span>Tipografía</span></div>
       <select class="sel" id="txt-font">
+        <option value="Helvetica, Arial, sans-serif" selected>Helvetica</option>
         <option value="Inter, sans-serif">Inter</option>
         <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
         <option value="'Anton', sans-serif">Anton</option>
@@ -414,7 +457,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <option value="'Caveat', cursive">Caveat</option>
         <option value="'Syne', sans-serif">Syne</option>
         <option value="Georgia, serif">Georgia</option>
-        <option value="Helvetica, Arial, sans-serif">Helvetica</option>
         <option value="Impact, sans-serif">Impact</option>
         <option value="Courier, monospace">Courier</option>
       </select>
@@ -535,11 +577,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <!-- ─────────── EXPORT ─────────── -->
+
 <div class="sec">
   <div class="st">Calidad de exportación</div>
   <div class="fi">
-    <div class="fr"><span>Bitrate (Mbps)</span><span class="fv" id="v-eb">16</span></div>
-    <div class="sr"><input type="range" id="s-eb" min="2" max="30" value="16"><input type="number" class="ni" id="n-eb" min="2" max="30" value="16"></div>
+    <div class="fr"><span>Bitrate (Mbps)</span><span class="fv" id="v-eb">25</span></div>
+    <div class="sr"><input type="range" id="s-eb" min="2" max="60" value="25"><input type="number" class="ni" id="n-eb" min="2" max="60" value="25"></div>
   </div>
   <div class="fi">
     <div class="fr"><span>FPS</span><span class="fv" id="v-ef">30</span></div>
@@ -553,6 +596,28 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 <script>
 'use strict';
+
+// Global error reporter — shows runtime errors on screen for mobile debugging.
+// Without this, iOS Safari would silently fail and the user sees nothing.
+(function(){
+  function showError(msg){
+    let box = document.getElementById('__errbox');
+    if(!box){
+      box = document.createElement('div');
+      box.id = '__errbox';
+      box.style.cssText = 'position:fixed;left:10px;right:10px;bottom:10px;background:#400;color:#fff;padding:10px;border-radius:4px;font:12px monospace;z-index:9999;max-height:40vh;overflow:auto;white-space:pre-wrap;border:1px solid #f66';
+      if(document.body) document.body.appendChild(box);
+      else document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(box));
+    }
+    box.textContent += msg + '\n';
+  }
+  window.addEventListener('error',e=>{
+    showError('ERROR: ' + (e.message||'unknown') + ' @ ' + (e.filename||'?') + ':' + (e.lineno||'?'));
+  });
+  window.addEventListener('unhandledrejection',e=>{
+    showError('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+})();
 
 // ═══════════════════════════════════════════════════════════════
 // FAST GAUSSIAN BLUR — 3-pass separable box blur approximation.
@@ -764,7 +829,7 @@ function generateRandomPalette(){
 // ═══════════════════════════════════════════════════════════════
 const cfg={
   palette:0,
-  magnetic:0.4,
+  magnetic:0.85,
   baseColor:'#ffffff',
   baseAttraction:0,
   dotCount:4,
@@ -782,18 +847,22 @@ const cfg={
   detectorMode:'centroid',
   colorSpeed:1.0,
   driftSpeed:0.05,
+  // Walk mode
+  walkForce:1.0,      // force multiplier for color position advance per frame
+  walkPivot:0.5,      // 0..1 — center point within band. Below→left, above→right.
+  walkInvert:false,   // invert direction of movement
   glow:false, glowRadius:3,
-  blur:false, blurPx:4,
-  lfo:false, lfoShape:'sine', lfoFreq:0.3, lfoAmt:20,
+  blur:true, blurPx:4,
+  lfo:true, lfoShape:'sine', lfoFreq:0.3, lfoAmt:20,
   text:{
     enabled:false,
     content:'',
-    font:'Inter, sans-serif',
+    font:'Helvetica, Arial, sans-serif',
     weight:'bold',
-    size:48,
+    size:8,
     color:'#ffffff',
     opacity:1.0,
-    x:0.5, y:0.5,
+    x:0.5, y:0.35,
     anchorX:'center', anchorY:'middle',
     align:'center',
     lineHeight:1.2,
@@ -802,13 +871,14 @@ const cfg={
     shadow:false, shadowColor:'#000000', shadowX:2, shadowY:2, shadowBlur:4,
     react:false, reactPulse:0.15,
   },
-  exportBitrate:16, exportFps:30,
+  exportBitrate:25, exportFps:30,
 };
 
 const DS=Array.from({length:8},()=>({
   energy:0, colorEnergy:0, localT:0.5,
   r:255,g:255,b:255,
   peakDb:-100, minDb:-30,
+  walkPos:0, // accumulated hue position for Walk mode (0..1, wraps)
 }));
 let driftPhase=0;
 let totalEnergy=0;
@@ -919,18 +989,26 @@ function normalizeDb(currentDb, d){
 // COLOR
 // ═══════════════════════════════════════════════════════════════
 function spectrumRGB(t){
+  if(!isFinite(t)) t = 0;
   const offset=PAL_HUE[cfg.palette]||0;
   return hsl2rgb(offset + t*330, 1, 0.55);
 }
 function paletteRGB(t){
+  if(!isFinite(t)) t = 0;
   const cols=PALETTES_RGB[cfg.palette];
+  if(!cols || cols.length < 2) return [255,255,255];
   const n=cols.length-1, s=t*n;
-  const i=clamp(Math.floor(s), 0, n-1);
-  return lerp3(cols[i], cols[i+1], clamp(s-i, 0, 1));
+  let i=Math.floor(s);
+  if(!isFinite(i)) i = 0;
+  i = clamp(i, 0, n-1);
+  const frac = clamp(s-i, 0, 1);
+  return lerp3(cols[i], cols[i+1], isFinite(frac) ? frac : 0);
 }
 function targetRGB(t){
+  if(!isFinite(t)) t = 0;
   t = t - Math.floor(t);
-  return lerp3(spectrumRGB(t), paletteRGB(t), cfg.magnetic);
+  if(!isFinite(t)) t = 0;
+  return lerp3(spectrumRGB(t), paletteRGB(t), clamp(cfg.magnetic, 0, 1));
 }
 
 function dotGlobalT(i, n, localT){
@@ -944,6 +1022,12 @@ function dotGlobalT(i, n, localT){
     }
     case 'drift': {
       return (i/n + localT*cfg.colorSpeed + driftPhase) % 1;
+    }
+    case 'walk': {
+      // walkPos is accumulated per-dot (updated in updateDS). Offset by i/n so
+      // each dot starts at a different spot on the wheel.
+      const pos = (i/n + DS[i].walkPos) % 1;
+      return pos < 0 ? pos + 1 : pos;
     }
   }
   return localT;
@@ -1031,32 +1115,72 @@ function applyBlurToCanvas(blurPx){
 
 function frame(now){
   animId=requestAnimationFrame(frame);
-  const dt=Math.min(now-lastT,50);
-  lastT=now;
+  try {
+    const dt=Math.min(now-lastT,50);
+    lastT=now;
 
-  if(cfg.colorMode==='drift'){
-    driftPhase = (driftPhase + cfg.driftSpeed * (dt/1000)) % 1;
+    const blurPx=computeBlurPx(dt);
+    if(!exporting) applyBlurToCanvas(blurPx);
+
+    vctx.clearRect(0,0,cW,cH);
+    if(videoEl && videoEl.readyState>=2){
+      vctx.drawImage(videoEl, 0, 0, cW, cH);
+    }
+
+    // When NOT exporting: this loop drives the audio analysis and state updates.
+    // When exporting: the dedicated export loop drives state updates at fixed fps
+    // (so rAF throttling doesn't affect output).
+    if(!exporting){
+      if(cfg.colorMode==='drift'){
+        driftPhase = (driftPhase + cfg.driftSpeed * (dt/1000)) % 1;
+      }
+      if(videoEl && !videoEl.paused && !videoEl.ended && audioReady){
+        pullFFT();
+        updateDS(dt);
+      }
+    }
+
+    octx.clearRect(0,0,cW,cH);
+    drawDots(octx, cW, cH);
+    drawText(octx, cW, cH);
+    syncPreview();
+  } catch(err){
+    if(window.dispatchEvent){
+      window.dispatchEvent(new ErrorEvent('error',{message:'frame: '+err.message,error:err}));
+    }
+    console.error('frame error:', err);
   }
+}
 
-  const blurPx=computeBlurPx(dt);
-  if(!exporting) applyBlurToCanvas(blurPx);
+// Dedicated export tick — runs on setInterval at the configured fps so that
+// rAF throttling does not slow down the exported video. This is the ONLY place
+// that draws frames to the exportCanvas during export, and the only place that
+// advances the audio/state during export.
+let exportTickId = null;
+let exportLastT = 0;
+function exportTick(){
+  if(!exporting) return;
+  try {
+    const now = performance.now();
+    const dt = Math.min(now - exportLastT, 100);
+    exportLastT = now;
 
-  vctx.clearRect(0,0,cW,cH);
-  if(videoEl && videoEl.readyState>=2){
-    vctx.drawImage(videoEl, 0, 0, cW, cH);
+    if(cfg.colorMode==='drift'){
+      driftPhase = (driftPhase + cfg.driftSpeed * (dt/1000)) % 1;
+    }
+    if(videoEl && !videoEl.paused && !videoEl.ended && audioReady){
+      pullFFT();
+      updateDS(dt);
+    }
+    // Compute blur using a dedicated dt for LFO
+    const blurPx = computeBlurPx(dt);
+    drawForExport(blurPx);
+  } catch(err){
+    console.error('exportTick error:', err);
+    if(window.dispatchEvent){
+      window.dispatchEvent(new ErrorEvent('error',{message:'exportTick: '+err.message,error:err}));
+    }
   }
-
-  if(videoEl && !videoEl.paused && !videoEl.ended && audioReady){
-    pullFFT();
-    updateDS(dt);
-  }
-
-  octx.clearRect(0,0,cW,cH);
-  drawDots(octx, cW, cH);
-  drawText(octx, cW, cH);
-  syncPreview();
-
-  if(exporting) drawForExport(blurPx);
 }
 
 function updateDS(dt){
@@ -1096,9 +1220,17 @@ function updateDS(dt){
     energySum += d.energy;
 
     let colorDrive = clamp(norm * cfg.colorSensMul, 0, 1);
-    const colorFloor = cfg.baseAttraction;
+    // baseAttraction acts as:
+    //   positive → floor (sticky color, never returns fully to base)
+    //   negative → release accelerator (returns faster than configured colorRelease)
+    const colorFloor = Math.max(0, cfg.baseAttraction);
     colorDrive = colorFloor + (1 - colorFloor) * colorDrive;
-    const tauC = colorDrive > d.colorEnergy ? Math.max(1, cfg.colorAttack) : Math.max(1, cfg.colorRelease);
+    let effReleaseC = cfg.colorRelease;
+    if(cfg.baseAttraction < 0){
+      // -1.0 → tau×0.05 (20× faster), -0.5 → tau×0.5, 0 → normal
+      effReleaseC = cfg.colorRelease * Math.max(0.05, 1 + cfg.baseAttraction);
+    }
+    const tauC = colorDrive > d.colorEnergy ? Math.max(1, cfg.colorAttack) : Math.max(1, effReleaseC);
     d.colorEnergy += (colorDrive - d.colorEnergy) * (1 - Math.exp(-dt/tauC));
     if(Math.abs(d.colorEnergy - colorFloor) < 0.005){
       d.colorEnergy = colorFloor;
@@ -1108,6 +1240,22 @@ function updateDS(dt){
       const rawLocal = bandLocalT(lo, hi);
       const tauL = Math.max(1, cfg.colorAttack);
       d.localT += (rawLocal - d.localT) * (1 - Math.exp(-dt/tauL));
+    }
+
+    // Walk mode: accumulate color position based on where the freq is
+    // relative to pivot, weighted by energy in the band.
+    if(cfg.colorMode === 'walk' && norm > 0.02){
+      const rawLocal = bandLocalT(lo, hi);
+      // Distance from pivot: -0.5..+0.5 (signed)
+      const distFromPivot = rawLocal - cfg.walkPivot;
+      // Energy-weighted advance per second. Scale factor 2 so that max deviation
+      // (0.5) with full energy (1) and force=1 produces 1 hue-turn per second.
+      let delta = distFromPivot * norm * cfg.walkForce * 2 * (dt/1000);
+      if(cfg.walkInvert) delta = -delta;
+      if(!isFinite(delta)) delta = 0;
+      d.walkPos = (d.walkPos + delta) % 1;
+      if(!isFinite(d.walkPos)) d.walkPos = 0;
+      if(d.walkPos < 0) d.walkPos += 1;
     }
 
     const gT = dotGlobalT(i, n, d.localT);
@@ -1295,7 +1443,7 @@ async function doExport(){
   }
   ectx.clearRect(0,0,exportCanvas.width,exportCanvas.height);
   // Reset AGC so bands re-calibrate from scratch
-  DS.forEach(d=>{d.peakDb=-100; d.minDb=-30; d.energy=0; d.colorEnergy=0; d.localT=0.5});
+  DS.forEach(d=>{d.peakDb=-100; d.minDb=-30; d.energy=0; d.colorEnergy=0; d.localT=0.5; d.walkPos=0});
   totalEnergy=0;
   lfoPhase=0; lfoTarget=0; lfoCurrent=0;
 
@@ -1313,6 +1461,7 @@ async function doExport(){
   rec.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
   const cleanup=()=>{
     exporting=false;
+    if(exportTickId){clearInterval(exportTickId); exportTickId=null}
     try{if(exportAudioDest){srcNode.disconnect(exportAudioDest); exportAudioDest=null}}catch(e){}
     btn.disabled=false; pw.classList.remove('active'); pf.style.width='0%';
     document.getElementById('bp').textContent='▶ Play';
@@ -1329,7 +1478,10 @@ async function doExport(){
   exporting=true;
   videoEl.pause(); videoEl.currentTime=0;
   await new Promise(r=>{videoEl.onseeked=r});
-  rec.start(100); videoEl.play();
+  rec.start(1000); videoEl.play();
+  // Start dedicated export loop: runs at fixed fps regardless of rAF throttling
+  exportLastT = performance.now();
+  exportTickId = setInterval(exportTick, 1000/fps);
   document.getElementById('bp').textContent='⏸ Pause';
   const dur=videoEl.duration;
   const iv=setInterval(()=>{
@@ -1618,6 +1770,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   lsn('s-crk','n-crk','colorRelease',v=>Math.round(v)+'ms');
   lsn('s-cspd','n-cspd','colorSpeed',v=>parseFloat(v).toFixed(1)+'×');
   lsn('s-drs','n-drs','driftSpeed',v=>parseFloat(v).toFixed(2)+' Hz');
+  lsn('s-wkf','n-wkf','walkForce',v=>parseFloat(v).toFixed(1)+'×');
+  lsn('s-wkp','n-wkp','walkPivot',v=>Math.round(v)+'%',v=>v/100);
   lsn('s-gw', 'n-gw', 'glowRadius',v=>parseFloat(v).toFixed(1)+'×');
   lsn('s-bl', 'n-bl', 'blurPx',  v=>parseFloat(v).toFixed(1));
   lsn('s-lfs','n-lfs','lfoFreq', v=>parseFloat(v).toFixed(2));
@@ -1625,14 +1779,33 @@ document.addEventListener('DOMContentLoaded',()=>{
   lsn('s-eb', 'n-eb', 'exportBitrate', v=>Math.round(v));
   lsn('s-ef', 'n-ef', 'exportFps', v=>Math.round(v));
 
+  // Panel opacity slider — controls CSS variable --panel-alpha
+  (function(){
+    const sl = document.getElementById('s-pal');
+    const nm = document.getElementById('n-pal');
+    const fv = document.getElementById('v-pal');
+    function apply(v){
+      v = clamp(parseFloat(v)||95, 20, 100);
+      sl.value = v; nm.value = v;
+      fv.textContent = Math.round(v) + '%';
+      document.documentElement.style.setProperty('--panel-alpha', (v/100).toFixed(2));
+    }
+    sl.oninput = () => apply(sl.value);
+    nm.oninput = () => apply(nm.value);
+    apply(95);
+  })();
+
   const HINTS_COLOR={
     locked:  'Locked: cada bola en su tramo de la paleta.',
     spread:  'Spread: cada bola recorre toda la paleta partiendo de un color distinto.',
-    drift:   'Drift: además de reaccionar al sonido, deriva lentamente por la rueda de color.'
+    drift:   'Drift: además de reaccionar al sonido, deriva lentamente por la rueda de color.',
+    walk:    'Walk: cada bola acumula posición en el espectro según la frecuencia. No vuelve al inicio.'
   };
   setupModeChooser('mode-color','colorMode',v=>{
     document.getElementById('hint-mode-color').textContent = HINTS_COLOR[v];
     document.getElementById('fi-drift').style.display = v==='drift' ? '' : 'none';
+    document.getElementById('fi-walk').style.display = v==='walk' ? '' : 'none';
+    document.getElementById('fi-cspd').style.display = v==='walk' ? 'none' : '';
     if(v!=='drift') driftPhase=0;
   });
 
@@ -1668,6 +1841,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('n-fm').oninput=e=>applyFM(e.target.value);
 
   tog('tg-glow','glow',on=>document.getElementById('glow-x').style.display=on?'block':'none');
+  tog('tg-wkinv','walkInvert');
   tog('tg-blur','blur',on=>{
     document.getElementById('blur-x').style.display=on?'block':'none';
     if(!on){
@@ -1743,10 +1917,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       d.energy=0; d.colorEnergy=0; d.localT=0.5;
       d.r=255; d.g=255; d.b=255;
       d.peakDb=-100; d.minDb=-30;
+      d.walkPos=0;
     });
     lfoPhase=0; lfoTarget=0; lfoCurrent=0;
     driftPhase=0; totalEnergy=0;
     exporting=false; lastBlurApplied=-999;
+    if(exportTickId){clearInterval(exportTickId); exportTickId=null}
     if(videoCanvas) videoCanvas.style.filter='none';
     document.getElementById('dz').style.display='';
     document.getElementById('cw').classList.remove('active');
@@ -1768,5 +1944,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('resize',()=>{if(videoEl&&videoEl.videoWidth)fitStage()});
 });
 </script>
+
 </body>
 </html>
