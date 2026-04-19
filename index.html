@@ -57,6 +57,12 @@ body.panel-open .main{padding-right:var(--pw)}
 .pb2::-webkit-scrollbar{width:3px}
 .pb2::-webkit-scrollbar-thumb{background:var(--bd)}
 .sec{padding:12px 14px;border-bottom:1px solid var(--bd)}
+.sec.collapsible > .sec-body{display:none}
+.sec.collapsible.open > .sec-body{display:block}
+.sec.collapsible > .st{cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;user-select:none}
+.sec.collapsible.open > .st{margin-bottom:10px}
+.sec.collapsible > .st::after{content:'▸';font-size:.8rem;transition:transform .15s;color:var(--mid)}
+.sec.collapsible.open > .st::after{transform:rotate(90deg)}
 .st{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
 .dp{display:flex;gap:11px;justify-content:center;padding:2px 0 4px;flex-wrap:wrap}
 .pd{width:10px;height:10px;border-radius:50%;background:#fff;transition:background .08s,transform .08s;flex-shrink:0}
@@ -184,12 +190,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="st">Modo de color</div>
   <div class="mode" id="mode-color">
     <button class="mp" data-v="locked">Locked</button>
-    <button class="mp sel" data-v="spread">Spread</button>
+    <button class="mp" data-v="spread">Spread</button>
     <button class="mp" data-v="drift">Drift</button>
-    <button class="mp" data-v="walk">Walk</button>
+    <button class="mp sel" data-v="walk">Walk</button>
   </div>
-  <div class="hint" id="hint-mode-color">Spread: cada bola recorre toda la paleta partiendo de un color distinto.</div>
-  <div class="fi" id="fi-cspd" style="margin-top:9px">
+  <div class="hint" id="hint-mode-color">Walk: cada bola acumula posición en el espectro según la frecuencia. No vuelve al inicio.</div>
+  <div class="fi" id="fi-cspd" style="display:none;margin-top:9px">
     <div class="fr"><span>Velocidad de color</span><span class="fv" id="v-cspd">1.0×</span></div>
     <div class="sr"><input type="range" id="s-cspd" min="0.1" max="8" value="1.0" step="0.1"><input type="number" class="ni" id="n-cspd" min="0.1" max="8" value="1.0" step="0.1"></div>
     <div class="hint">Cuánto recorre el color con pequeños cambios de frecuencia.</div>
@@ -199,7 +205,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="sr"><input type="range" id="s-drs" min="0.01" max="1" value="0.05" step="0.01"><input type="number" class="ni w" id="n-drs" min="0.01" max="1" value="0.05" step="0.01"></div>
     <div class="hint">Velocidad de la deriva continua. Lento = meditativo.</div>
   </div>
-  <div id="fi-walk" style="display:none">
+  <div id="fi-walk">
     <div class="fi" style="margin-top:9px">
       <div class="fr"><span>Fuerza del walk</span><span class="fv" id="v-wkf">1.0×</span></div>
       <div class="sr"><input type="range" id="s-wkf" min="0.1" max="10" value="1.0" step="0.1"><input type="number" class="ni" id="n-wkf" min="0.1" max="10" value="1.0" step="0.1"></div>
@@ -254,8 +260,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 <div class="sec">
   <div class="st">Fidelidad a la paleta</div>
   <div class="fi">
-    <div class="fr"><span>Fuerza</span><span class="fv" id="v-mag">85%</span></div>
-    <div class="sr"><input type="range" id="s-mag" min="0" max="100" value="85"><input type="number" class="ni" id="n-mag" min="0" max="100" value="85"></div>
+    <div class="fr"><span>Fuerza</span><span class="fv" id="v-mag">100%</span></div>
+    <div class="sr"><input type="range" id="s-mag" min="0" max="100" value="100"><input type="number" class="ni" id="n-mag" min="0" max="100" value="100"></div>
     <div class="hint">0% = arcoíris HSL completo (ignora la paleta). 100% = solo los colores de la paleta. Subir si no se notan los cambios de paleta.</div>
   </div>
 </div>
@@ -283,8 +289,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 <div class="sec">
   <div class="st">Posición y espaciado</div>
   <div class="fi">
-    <div class="fr"><span>Posición Y</span><span class="fv" id="v-py">88%</span></div>
-    <div class="sr"><input type="range" id="s-py" min="20" max="98" value="88"><input type="number" class="ni" id="n-py" min="20" max="98" value="88"></div>
+    <div class="fr"><span>Posición Y</span><span class="fv" id="v-py">35%</span></div>
+    <div class="sr"><input type="range" id="s-py" min="5" max="98" value="35"><input type="number" class="ni" id="n-py" min="5" max="98" value="35"></div>
     <div class="hint">Altura vertical de la hilera de bolas.</div>
   </div>
   <div class="fi">
@@ -391,11 +397,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 <div class="sec">
   <div class="st">Glow</div>
-  <div class="tr"><span class="tl">Efecto glow</span><button class="tg" id="tg-glow"></button></div>
-  <div id="glow-x" style="display:none;margin-top:9px">
+  <div class="tr"><span class="tl">Efecto glow</span><button class="tg on" id="tg-glow"></button></div>
+  <div id="glow-x" style="margin-top:9px">
     <div class="fi">
-      <div class="fr"><span>Radio</span><span class="fv" id="v-gw">3×</span></div>
-      <div class="sr"><input type="range" id="s-gw" min="1" max="8" value="3" step=".5"><input type="number" class="ni" id="n-gw" min="1" max="8" value="3" step=".5"></div>
+      <div class="fr"><span>Radio</span><span class="fv" id="v-gw">4×</span></div>
+      <div class="sr"><input type="range" id="s-gw" min="1" max="8" value="4" step=".5"><input type="number" class="ni" id="n-gw" min="1" max="8" value="4" step=".5"></div>
     </div>
   </div>
 </div>
@@ -405,8 +411,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="tr"><span class="tl">Activar blur</span><button class="tg on" id="tg-blur"></button></div>
   <div id="blur-x" style="margin-top:9px">
     <div class="fi">
-      <div class="fr"><span>Intensidad (px)</span><span class="fv" id="v-bl">4</span></div>
-      <div class="sr"><input type="range" id="s-bl" min="0" max="50" value="4" step=".5"><input type="number" class="ni" id="n-bl" min="0" max="50" value="4" step=".5"></div>
+      <div class="fr"><span>Intensidad (px)</span><span class="fv" id="v-bl">2.5</span></div>
+      <div class="sr"><input type="range" id="s-bl" min="0" max="50" value="2.5" step=".5"><input type="number" class="ni" id="n-bl" min="0" max="50" value="2.5" step=".5"></div>
     </div>
     <div class="fi" style="margin-top:8px">
       <div class="tr" style="margin-bottom:6px"><span class="tl">LFO (movimiento)</span><button class="tg on" id="tg-lfo"></button></div>
@@ -489,8 +495,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <div class="sr"><input type="range" id="s-txx" min="0" max="100" value="50"><input type="number" class="ni" id="n-txx" min="0" max="100" value="50"></div>
     </div>
     <div class="fi">
-      <div class="fr"><span>Posición Y</span><span class="fv" id="v-txy">50%</span></div>
-      <div class="sr"><input type="range" id="s-txy" min="0" max="100" value="50"><input type="number" class="ni" id="n-txy" min="0" max="100" value="50"></div>
+      <div class="fr"><span>Posición Y</span><span class="fv" id="v-txy">45%</span></div>
+      <div class="sr"><input type="range" id="s-txy" min="0" max="100" value="45"><input type="number" class="ni" id="n-txy" min="0" max="100" value="45"></div>
     </div>
     <div class="fi">
       <div class="fr"><span>Anclaje horizontal</span></div>
@@ -582,8 +588,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 <div class="sec">
   <div class="st">Reverb</div>
-  <div class="tr"><span class="tl">Activar reverb</span><button class="tg" id="tg-reverb"></button></div>
-  <div id="reverb-x" style="display:none;margin-top:10px">
+  <div class="tr"><span class="tl">Activar reverb</span><button class="tg on" id="tg-reverb"></button></div>
+  <div id="reverb-x" style="margin-top:10px">
     <div class="fi">
       <div class="fr"><span>Preset</span></div>
       <div class="mode" id="mode-reverb">
@@ -864,14 +870,14 @@ function generateRandomPalette(){
 // CONFIG
 // ═══════════════════════════════════════════════════════════════
 const cfg={
-  palette:0,
-  magnetic:0.85,
+  palette:0, // will be set to CUSTOM_INDEX at init
+  magnetic:1.0,
   baseColor:'#ffffff',
   baseAttraction:0,
   dotCount:4,
   bands:[],
   lastBandStart:2000,
-  posY:0.88, spacing:0.15,
+  posY:0.35, spacing:0.15,
   dotSize:3, growth:3.0,
   volSens:0.7, sizeSens:1.0, sizeGamma:1.5, colorSensMul:1.0,
   colorSens:5,
@@ -879,7 +885,7 @@ const cfg={
   inertia:0,
   colorAttack:200,
   colorRelease:800,
-  colorMode:'spread',
+  colorMode:'walk',
   detectorMode:'centroid',
   colorSpeed:1.0,
   driftSpeed:0.05,
@@ -887,8 +893,8 @@ const cfg={
   walkForce:1.0,      // force multiplier for color position advance per frame
   walkPivot:0.5,      // 0..1 — center point within band. Below→left, above→right.
   walkInvert:false,   // invert direction of movement
-  glow:false, glowRadius:3,
-  blur:true, blurPx:4,
+  glow:true, glowRadius:4,
+  blur:true, blurPx:2.5,
   lfo:true, lfoShape:'sine', lfoFreq:0.3, lfoAmt:20,
   text:{
     enabled:false,
@@ -898,7 +904,7 @@ const cfg={
     size:8,
     color:'#ffffff',
     opacity:1.0,
-    x:0.5, y:0.35,
+    x:0.5, y:0.45,
     anchorX:'center', anchorY:'middle',
     align:'center',
     lineHeight:1.2,
@@ -909,7 +915,7 @@ const cfg={
   },
   exportBitrate:25, exportFps:30,
   // Reverb
-  reverbEnabled:false,
+  reverbEnabled:true,
   reverbPreset:'hall',
   reverbMix:0.25,       // 0..1
   reverbPreDelay:20,    // ms
@@ -2131,6 +2137,123 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
 
   window.addEventListener('resize',()=>{if(videoEl&&videoEl.videoWidth)fitStage()});
+
+  // ═══════════════════════════════════════════════════════════════
+  // PANEL REORGANIZATION
+  // Reorders sections by frequency of use and makes less-used ones
+  // collapsible. The most-used controls stay visible at top.
+  // ═══════════════════════════════════════════════════════════════
+  (function reorganizePanel(){
+    // Desired order of sections (by their visible title text).
+    // Sections in TOP_VISIBLE appear at top expanded.
+    // Sections in COLLAPSED_ORDER appear below, collapsed by default.
+    // Anything not listed stays where it is (shouldn't happen if list is complete).
+    const TOP_VISIBLE = [
+      'Paleta de color',
+      'Posición y espaciado',
+      'Texto sobre el vídeo',
+      'Reverb',
+      'Desenfoque de vídeo',
+      'Glow',
+    ];
+    const COLLAPSED_ORDER = [
+      'Círculos',
+      'Modo de color',
+      'Detector de frecuencia',
+      'Fidelidad a la paleta',
+      'Color base (reposo)',
+      'Atracción al color',
+      'Sensibilidad',
+      'Tamaño',
+      'Inicio última banda',
+      'Bandas (Hz)',
+      'Inercia tamaño',
+      'Envelope tamaño (avanzado)',
+      'Envelope color',
+      'Calidad de exportación',
+      'Opacidad del panel',
+      'Vista previa',
+    ];
+
+    const container = document.querySelector('.pb2');
+    if(!container) return;
+
+    // Build map: title → section node
+    const byTitle = new Map();
+    container.querySelectorAll('.sec').forEach(sec=>{
+      const st = sec.querySelector('.st');
+      if(!st) return;
+      const title = st.textContent.trim();
+      byTitle.set(title, sec);
+    });
+
+    // Wrap all content after .st into .sec-body (so collapsing hides only content)
+    byTitle.forEach((sec)=>{
+      const st = sec.querySelector('.st');
+      if(!st) return;
+      if(sec.querySelector(':scope > .sec-body')) return; // already wrapped
+      const body = document.createElement('div');
+      body.className = 'sec-body';
+      // Move all siblings after .st into body
+      let next = st.nextSibling;
+      while(next){
+        const toMove = next;
+        next = next.nextSibling;
+        body.appendChild(toMove);
+      }
+      sec.appendChild(body);
+    });
+
+    // Reorder: detach all known sections, then re-append in new order
+    const full = [...TOP_VISIBLE, ...COLLAPSED_ORDER];
+    full.forEach(title=>{
+      const sec = byTitle.get(title);
+      if(sec && sec.parentNode === container){
+        container.appendChild(sec); // appendChild moves if already in DOM
+      }
+    });
+
+    // Mark collapsed sections
+    COLLAPSED_ORDER.forEach(title=>{
+      const sec = byTitle.get(title);
+      if(!sec) return;
+      sec.classList.add('collapsible');
+      // Don't add 'open' class → starts collapsed
+      const st = sec.querySelector('.st');
+      if(st){
+        st.addEventListener('click', ()=>{
+          sec.classList.toggle('open');
+        });
+      }
+    });
+
+    // Top visible sections: not collapsible, keep their body visible as usual
+    // (no class changes needed, they work like before)
+  })();
+
+  // ═══════════════════════════════════════════════════════════════
+  // INITIAL STATE TWEAKS
+  // Apply defaults that require UI state syncing (palette=Custom, mode=Walk)
+  // ═══════════════════════════════════════════════════════════════
+  (function applyInitialState(){
+    // 1. Select Custom palette by default
+    if(CUSTOM_INDEX >= 0){
+      cfg.palette = CUSTOM_INDEX;
+      document.querySelectorAll('.pi').forEach((el,j)=>el.classList.toggle('sel', j===CUSTOM_INDEX));
+      const cpd = document.getElementById('custom-pal');
+      const rcd = document.getElementById('random-ctrl');
+      if(cpd) cpd.style.display = '';
+      if(rcd) rcd.style.display = 'none';
+      updateHueTrack();
+    }
+    // 2. Walk mode UI visibility (color mode already 'walk' in cfg, but UI sections need syncing)
+    const fiWalk = document.getElementById('fi-walk');
+    const fiCspd = document.getElementById('fi-cspd');
+    const fiDrift = document.getElementById('fi-drift');
+    if(fiWalk)  fiWalk.style.display  = '';
+    if(fiCspd)  fiCspd.style.display  = 'none';
+    if(fiDrift) fiDrift.style.display = 'none';
+  })();
 });
 </script>
 
